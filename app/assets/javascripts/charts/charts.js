@@ -68,7 +68,7 @@ angular.module('TVCharts.Charts', [
             '<br><br>' +
           '</md-dialog-content>' +
           '<md-dialog-actions style="justify-content: space-between; padding: 8px 16px;">' +
-            '<span style="font-size: 12px;">Data sourced from TMDB</span>' +
+            // '<span style="font-size: 12px;">Data sourced from TMDB</span>' +
             '<md-button ng-click="closeDialog()" class="md-primary">Close</md-button>' +
           '</md-dialog-actions>' +
         '</md-dialog>',
