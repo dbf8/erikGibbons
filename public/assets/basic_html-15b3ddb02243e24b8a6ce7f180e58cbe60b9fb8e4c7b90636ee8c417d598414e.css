@@ -1,0 +1,9 @@
+/* line 1, app/assets/stylesheets/basic_html.css.scss */
+a {
+  color: #000 !important;
+}
+
+/* line 4, app/assets/stylesheets/basic_html.css.scss */
+a:hover {
+  color: #fc8 !important;
+}

@@ -1,0 +1,697 @@
+/* line 1, app/assets/stylesheets/basic_html.css.scss */
+a {
+  color: #000 !important;
+}
+
+/* line 4, app/assets/stylesheets/basic_html.css.scss */
+a:hover {
+  color: #fc8 !important;
+}
+@import url("https://fonts.googleapis.com/css?family=Montserrat");
+/* line 3, app/assets/stylesheets/custom_styling.css.scss */
+md-content.md-default-theme, md-content, md-content {
+  /* hide md default background-color */
+  background-color: rgba(0, 0, 0, 0) !important;
+}
+
+/* line 8, app/assets/stylesheets/custom_styling.css.scss */
+#main {
+  background: black;
+  /* For browsers that do not support gradients */
+  background: -webkit-linear-gradient(left top, #070C1F, #cccccc);
+  /* For Safari 5.1 to 6.0 */
+  background: -o-linear-gradient(bottom right, #070C1F, #cccccc);
+  /* For Opera 11.1 to 12.0 */
+  background: -moz-linear-gradient(bottom right, #070C1F, #cccccc);
+  /* For Firefox 3.6 to 15 */
+  background: linear-gradient(to bottom right, #070C1F, #cccccc);
+  /* Standard syntax */
+}
+
+/* line 16, app/assets/stylesheets/custom_styling.css.scss */
+.main-charts {
+  background: white !important;
+}
+
+/* line 25, app/assets/stylesheets/custom_styling.css.scss */
+#first-parallax {
+  width: 100%;
+  min-height: 600px;
+}
+
+/* line 30, app/assets/stylesheets/custom_styling.css.scss */
+#second-parallax {
+  width: 100%;
+  min-height: 600px;
+}
+
+/* line 35, app/assets/stylesheets/custom_styling.css.scss */
+.text-bubble {
+  background-color: rgba(30, 30, 30, 0.9);
+  max-width: 500px;
+  min-width: 250px;
+  border-radius: 15px;
+  border: 1px solid #000;
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  margin-right: -50%;
+  transform: translate(-50%, -50%);
+  text-align: center;
+  padding-left: 15px;
+  padding-right: 15px;
+}
+
+/* line 51, app/assets/stylesheets/custom_styling.css.scss */
+.introduction {
+  color: white;
+  font-size: 36px;
+}
+
+/* line 57, app/assets/stylesheets/custom_styling.css.scss */
+.active-skill {
+  color: white;
+  text-shadow: 0 0 3px white;
+}
+
+/* line 62, app/assets/stylesheets/custom_styling.css.scss */
+.inactive-skill {
+  color: #555555;
+}
+
+/* line 66, app/assets/stylesheets/custom_styling.css.scss */
+.active-skill:focus, .inactive-skill:focus {
+  outline: none;
+}
+
+/* line 70, app/assets/stylesheets/custom_styling.css.scss */
+.active-skill:hover, .inactive-skill:hover {
+  cursor: pointer;
+}
+
+/* line 74, app/assets/stylesheets/custom_styling.css.scss */
+#summary {
+  background: #d4dadb;
+  padding-top: 30px;
+  padding-bottom: 30px;
+}
+
+/* line 80, app/assets/stylesheets/custom_styling.css.scss */
+.info-container {
+  max-width: 1000px;
+  background-color: white;
+  border: 1px solid black;
+  border-radius: 10px;
+  padding-top: 20px;
+  padding-bottom: 30px;
+  padding-left: 25px;
+  padding-right: 25px;
+  margin-left: auto;
+  margin-right: auto;
+  font-family: "Montserrat";
+  font-size: 16px;
+}
+
+/* line 95, app/assets/stylesheets/custom_styling.css.scss */
+.info-img {
+  max-height: 75px;
+  max-width: 75px;
+  float: left;
+  padding-right: 15px;
+}
+
+/* line 102, app/assets/stylesheets/custom_styling.css.scss */
+.info-p {
+  min-height: 48px;
+}
+
+/* line 106, app/assets/stylesheets/custom_styling.css.scss */
+#skills {
+  width: 100%;
+  position: relative;
+  padding-top: 10px;
+}
+
+/* line 112, app/assets/stylesheets/custom_styling.css.scss */
+#skill-container {
+  position: relative;
+  width: 300px;
+  background-color: rgba(255, 255, 255, 0.3);
+  border-radius: 10px;
+  border: 1px solid darkblue;
+  margin: 0 auto;
+  padding-left: 15px;
+  padding-right: 15px;
+  padding-top: 5px;
+  padding-bottom: 5px;
+}
+
+/* line 125, app/assets/stylesheets/custom_styling.css.scss */
+.module {
+  width: 100%;
+  border-top: 1px solid white;
+  border-bottom: 1px solid white;
+  margin-top: 5px;
+  margin-bottom: 5px;
+  padding-top: 15px;
+}
+
+/* line 134, app/assets/stylesheets/custom_styling.css.scss */
+.proj-container {
+  margin-left: 20px;
+}
+
+/* line 138, app/assets/stylesheets/custom_styling.css.scss */
+.proj-veil {
+  background-color: white;
+  height: 100%;
+  text-align: center;
+  position: relative;
+}
+
+/* line 145, app/assets/stylesheets/custom_styling.css.scss */
+.veil-text {
+  top: 35%;
+  left: 50%;
+  margin-right: -50%;
+  transform: translate(-50%, -65%);
+  position: absolute;
+  width: 100%;
+  z-index: 50;
+  pointer-events: none;
+  opacity: 0;
+  font-family: "Arial Black";
+  color: black;
+  -webkit-transition: opacity 1.5s, color 1.5s;
+  transition: opacity 1.5s, color 1.5s;
+}
+
+/* line 165, app/assets/stylesheets/custom_styling.css.scss */
+.proj-veil:hover .veil-text {
+  opacity: 1;
+  color: #2bbac4;
+}
+
+/* line 170, app/assets/stylesheets/custom_styling.css.scss */
+.proj-tile {
+  display: inline-block;
+  margin-bottom: 25px;
+}
+
+/* line 175, app/assets/stylesheets/custom_styling.css.scss */
+.proj-tile-img-container {
+  width: 400px;
+  height: 225px;
+  border-radius: 10px;
+  margin-right: 25px;
+  overflow: hidden;
+  -webkit-transition: transform 0.3s;
+  transition: transform 0.3s;
+}
+
+/* line 187, app/assets/stylesheets/custom_styling.css.scss */
+.proj-tile-img-container:hover {
+  transform: scale(1.08, 1.08);
+}
+
+/* line 191, app/assets/stylesheets/custom_styling.css.scss */
+.proj-tile-img {
+  height: 100%;
+  width: auto;
+  -webkit-transition: transform 0.3s, opacity 1.2s;
+  transition: transform 0.3s, opacity 1.2s;
+  z-index: 100;
+}
+
+/* line 203, app/assets/stylesheets/custom_styling.css.scss */
+.proj-tile-img:hover {
+  transform: scale(1.08, 1.08);
+  opacity: 0.2;
+}
+
+/* line 208, app/assets/stylesheets/custom_styling.css.scss */
+#contact-container {
+  min-width: 350px;
+  max-width: 850px;
+  padding-left: 25px;
+  padding-right: 25px;
+  padding-bottom: 40px;
+  margin-top: 50px;
+  margin-bottom: 50px;
+  margin-left: auto;
+  margin-right: auto;
+  background-color: rgba(0, 0, 0, 0.3);
+  font-family: "Montserrat";
+  border: 1px solid darkblue;
+  border-radius: 10px;
+}
+
+/* line 224, app/assets/stylesheets/custom_styling.css.scss */
+.contact-text {
+  min-width: 300px !important;
+  max-width: 800px;
+  color: white;
+}
+
+/* line 230, app/assets/stylesheets/custom_styling.css.scss */
+.select-dropdown {
+  color: white;
+}
+
+/* line 237, app/assets/stylesheets/custom_styling.css.scss */
+.hide-img {
+  display: none;
+}
+
+/* line 245, app/assets/stylesheets/custom_styling.css.scss */
+.show-url > a {
+  color: lightblue !important;
+}
+
+/* line 250, app/assets/stylesheets/custom_styling.css.scss */
+.hide-url {
+  display: none;
+}
+
+/* line 257, app/assets/stylesheets/custom_styling.css.scss */
+.open {
+  display: none;
+}
+
+@media print {
+  /* line 265, app/assets/stylesheets/custom_styling.css.scss */
+  html * {
+    visibility: hidden;
+  }
+  /* line 268, app/assets/stylesheets/custom_styling.css.scss */
+  #resume, #resume * {
+    visibility: visible;
+    -webkit-print-color-adjust: exact;
+  }
+  /* line 272, app/assets/stylesheets/custom_styling.css.scss */
+  #resume {
+    position: absolute;
+    left: 0;
+    top: 0;
+    width: 100% !important;
+  }
+}
+
+/* line 280, app/assets/stylesheets/custom_styling.css.scss */
+#resume {
+  font-family: "Montserrat";
+  background-color: white;
+  width: 670px;
+}
+
+/* line 286, app/assets/stylesheets/custom_styling.css.scss */
+.sec-header {
+  text-align: center;
+  color: #648296;
+}
+
+/* line 291, app/assets/stylesheets/custom_styling.css.scss */
+.res-text, .res-list {
+  font-size: 12px;
+  margin-left: 10px;
+  margin-right: 10px;
+}
+
+/* line 297, app/assets/stylesheets/custom_styling.css.scss */
+.res-list {
+  padding-left: 15px !important;
+}
+
+/* line 301, app/assets/stylesheets/custom_styling.css.scss */
+.res-list > li {
+  display: list-item !important;
+  list-style-type: circle !important;
+}
+
+/* line 306, app/assets/stylesheets/custom_styling.css.scss */
+.res-hr {
+  background-image: linear-gradient(to right, rgba(100, 130, 150, 0), rgba(100, 130, 150, 0.75), rgba(100, 130, 150, 0));
+  height: 2px;
+}
+
+/* line 311, app/assets/stylesheets/custom_styling.css.scss */
+.top {
+  height: 40px;
+  font-size: 12px;
+  padding-left: 10px;
+  padding-right: 10px;
+}
+
+/* line 318, app/assets/stylesheets/custom_styling.css.scss */
+.top-header {
+  margin: 0px;
+}
+
+/*********
+* Inputs *
+*********/
+/* line 327, app/assets/stylesheets/custom_styling.css.scss */
+.md-icon-float {
+  margin: 0px 0px 0px 0px !important;
+  width: 500px !important;
+}
+
+/* line 332, app/assets/stylesheets/custom_styling.css.scss */
+.md-input-container {
+  width: 500px !important;
+}
+
+/**********************
+* Chart Options *
+**********************/
+/* line 339, app/assets/stylesheets/custom_styling.css.scss */
+.chart-title {
+  font-size: 48px;
+  line-height: 50px;
+  font-family: 'Roboto' !important;
+  color: rgba(50, 50, 50, 0.8);
+}
+
+/* line 345, app/assets/stylesheets/custom_styling.css.scss */
+.chart-subtitle {
+  color: rgba(50, 50, 50, 0.8);
+  font-size: 12px;
+}
+
+/* delimiter for title(s) */
+/* line 350, app/assets/stylesheets/custom_styling.css.scss */
+.chart-title span:not(:last-child):after {
+  content: " vs. ";
+}
+
+/* line 354, app/assets/stylesheets/custom_styling.css.scss */
+label {
+  font-weight: 700;
+}
+
+/* line 358, app/assets/stylesheets/custom_styling.css.scss */
+md-switch {
+  margin-top: 0px !important;
+}
+
+/* line 362, app/assets/stylesheets/custom_styling.css.scss */
+.opts-container {
+  margin-left: 10px;
+  margin-right: 10px;
+  width: 250px;
+}
+
+/******************
+* PPP Lender Page *
+******************/
+/* line 372, app/assets/stylesheets/custom_styling.css.scss */
+.ppp-card {
+  background-color: rgba(225, 225, 225, 0.9);
+  max-width: 1500px;
+  min-width: 500px;
+  border-radius: 15px;
+  border: 1px solid #FFF;
+  padding-left: 15px;
+  padding-right: 15px;
+  margin-left: 20px;
+  margin-bottom: 20px;
+}
+
+/* line 384, app/assets/stylesheets/custom_styling.css.scss */
+.ppp-filter {
+  background-color: rgba(225, 225, 225, 0.9);
+  max-width: 1500px;
+  min-width: 500px;
+  border-radius: 15px;
+  border: 1px solid #FFF;
+  padding-top: 30px;
+  padding-left: 15px;
+  padding-right: 15px;
+  margin-left: 20px;
+  margin-bottom: 20px;
+}
+
+/* line 397, app/assets/stylesheets/custom_styling.css.scss */
+.ppp-title {
+  color: white;
+  padding-left: 30px;
+}
+
+/* line 402, app/assets/stylesheets/custom_styling.css.scss */
+.ppp-select {
+  top: -8px;
+}
+
+/* line 406, app/assets/stylesheets/custom_styling.css.scss */
+.ppp-link-container {
+  margin-bottom: 0px;
+  margin-left: 25px;
+}
+
+/* line 411, app/assets/stylesheets/custom_styling.css.scss */
+.ppp-link {
+  color: blue !important;
+}
+/* line 1, app/assets/stylesheets/lightbox_img_fix.css.scss */
+.lb-cancel {
+  background: url(/assets/loading-f238e24ff83187f1ed15f11f139816e978a7dcc686174848cef2b130773f706d.gif) no-repeat !important;
+}
+
+/* line 5, app/assets/stylesheets/lightbox_img_fix.css.scss */
+.lb-nav a.lb-prev {
+  background: url(/assets/prev-be0974ce33bd685c3caf353c3ca35fb31ed5400c3d384d9e2896339793f247c5.png) left 48% no-repeat;
+}
+
+/* line 9, app/assets/stylesheets/lightbox_img_fix.css.scss */
+.lb-nav a.lb-next {
+  background: url(/assets/next-626c8a08fad5bfc0ca083141168b8be9f88cb79ecfe43aa684e1ae99c57f95f6.png) right 48% no-repeat !important;
+}
+
+/* line 13, app/assets/stylesheets/lightbox_img_fix.css.scss */
+.lb-data .lb-close {
+  background: url(/assets/close-4ae27df2c1747031b21b4582a0431136935d06f90f045fdc015ae72c347c1b04.png) top right no-repeat;
+}
+html.lb-disable-scrolling {
+  overflow: hidden;
+  /* Position fixed required for iOS. Just putting overflow: hidden; on the body is not enough. */
+  position: fixed;
+  height: 100vh;
+  width: 100vw;
+}
+
+.lightboxOverlay {
+  position: absolute;
+  top: 0;
+  left: 0;
+  z-index: 9999;
+  background-color: black;
+  filter: progid:DXImageTransform.Microsoft.Alpha(Opacity=80);
+  opacity: 0.8;
+  display: none;
+}
+
+.lightbox {
+  position: absolute;
+  left: 0;
+  width: 100%;
+  z-index: 10000;
+  text-align: center;
+  line-height: 0;
+  font-weight: normal;
+}
+
+.lightbox .lb-image {
+  display: block;
+  height: auto;
+  max-width: inherit;
+  max-height: none;
+  border-radius: 3px;
+
+  /* Image border */
+  border: 4px solid white;
+}
+
+.lightbox a img {
+  border: none;
+}
+
+.lb-outerContainer {
+  position: relative;
+  *zoom: 1;
+  width: 250px;
+  height: 250px;
+  margin: 0 auto;
+  border-radius: 4px;
+
+  /* Background color behind image.
+     This is visible during transitions. */
+  background-color: white;
+}
+
+.lb-outerContainer:after {
+  content: "";
+  display: table;
+  clear: both;
+}
+
+.lb-loader {
+  position: absolute;
+  top: 43%;
+  left: 0;
+  height: 25%;
+  width: 100%;
+  text-align: center;
+  line-height: 0;
+}
+
+.lb-cancel {
+  display: block;
+  width: 32px;
+  height: 32px;
+  margin: 0 auto;
+  /*background: url(/assets/lightbox2/dist/images/loading-f238e24ff83187f1ed15f11f139816e978a7dcc686174848cef2b130773f706d.gif) no-repeat;*/
+}
+
+.lb-nav {
+  position: absolute;
+  top: 0;
+  left: 0;
+  height: 100%;
+  width: 100%;
+  z-index: 10;
+}
+
+.lb-container > .nav {
+  left: 0;
+}
+
+.lb-nav a {
+  outline: none;
+  background-image: url('data:image/gif;base64,R0lGODlhAQABAPAAAP///wAAACH5BAEAAAAALAAAAAABAAEAAAICRAEAOw==');
+}
+
+.lb-prev, .lb-next {
+  height: 100%;
+  cursor: pointer;
+  display: block;
+}
+
+.lb-nav a.lb-prev {
+  width: 34%;
+  left: 0;
+  float: left;
+  /*background: url(/assets/lightbox2/dist/images/prev-be0974ce33bd685c3caf353c3ca35fb31ed5400c3d384d9e2896339793f247c5.png) left 48% no-repeat;*/
+  filter: progid:DXImageTransform.Microsoft.Alpha(Opacity=0);
+  opacity: 0;
+  -webkit-transition: opacity 0.6s;
+  -moz-transition: opacity 0.6s;
+  -o-transition: opacity 0.6s;
+  transition: opacity 0.6s;
+}
+
+.lb-nav a.lb-prev:hover {
+  filter: progid:DXImageTransform.Microsoft.Alpha(Opacity=100);
+  opacity: 1;
+}
+
+.lb-nav a.lb-next {
+  width: 64%;
+  right: 0;
+  float: right;
+  /*background: url(/assets/lightbox2/dist/images/next-626c8a08fad5bfc0ca083141168b8be9f88cb79ecfe43aa684e1ae99c57f95f6.png) right 48% no-repeat;*/
+  filter: progid:DXImageTransform.Microsoft.Alpha(Opacity=0);
+  opacity: 0;
+  -webkit-transition: opacity 0.6s;
+  -moz-transition: opacity 0.6s;
+  -o-transition: opacity 0.6s;
+  transition: opacity 0.6s;
+}
+
+.lb-nav a.lb-next:hover {
+  filter: progid:DXImageTransform.Microsoft.Alpha(Opacity=100);
+  opacity: 1;
+}
+
+.lb-dataContainer {
+  margin: 0 auto;
+  padding-top: 5px;
+  *zoom: 1;
+  width: 100%;
+  border-bottom-left-radius: 4px;
+  border-bottom-right-radius: 4px;
+}
+
+.lb-dataContainer:after {
+  content: "";
+  display: table;
+  clear: both;
+}
+
+.lb-data {
+  padding: 0 4px;
+  color: #ccc;
+}
+
+.lb-data .lb-details {
+  width: 85%;
+  float: left;
+  text-align: left;
+  line-height: 1.1em;
+}
+
+.lb-data .lb-caption {
+  font-size: 13px;
+  font-weight: bold;
+  line-height: 1em;
+}
+
+.lb-data .lb-caption a {
+  color: #4ae;
+}
+
+.lb-data .lb-number {
+  display: block;
+  clear: left;
+  padding-bottom: 1em;
+  font-size: 12px;
+  color: #999999;
+}
+
+.lb-data .lb-close {
+  display: block;
+  float: right;
+  width: 30px;
+  height: 30px;
+  /*background: url(/assets/lightbox2/dist/images/close-4ae27df2c1747031b21b4582a0431136935d06f90f045fdc015ae72c347c1b04.png) top right no-repeat;*/
+  text-align: right;
+  outline: none;
+  filter: progid:DXImageTransform.Microsoft.Alpha(Opacity=70);
+  opacity: 0.7;
+  -webkit-transition: opacity 0.2s;
+  -moz-transition: opacity 0.2s;
+  -o-transition: opacity 0.2s;
+  transition: opacity 0.2s;
+}
+
+.lb-data .lb-close:hover {
+  cursor: pointer;
+  filter: progid:DXImageTransform.Microsoft.Alpha(Opacity=100);
+  opacity: 1;
+}
+/*
+ * This is a manifest file that'll be compiled into application.css, which will include all the files
+ * listed below.
+ *
+ * Any CSS and SCSS file within this directory, lib/assets/stylesheets, vendor/assets/stylesheets,
+ * or any plugin's vendor/assets/stylesheets directory can be referenced here using a relative path.
+ *
+ * You're free to add application-wide styles to this file and they'll appear at the bottom of the
+ * compiled file so the styles you add here take precedence over styles defined in any styles
+ * defined in the other CSS/SCSS files in this directory. It is generally better to create a new
+ * file per style scope.
+ *
+ *= angular-material/angular-material
+
+
+
+ */

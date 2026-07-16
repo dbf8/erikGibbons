@@ -1,0 +1,19 @@
+/* line 1, app/assets/stylesheets/lightbox_img_fix.css.scss */
+.lb-cancel {
+  background: url(/assets/loading-f238e24ff83187f1ed15f11f139816e978a7dcc686174848cef2b130773f706d.gif) no-repeat !important;
+}
+
+/* line 5, app/assets/stylesheets/lightbox_img_fix.css.scss */
+.lb-nav a.lb-prev {
+  background: url(/assets/prev-be0974ce33bd685c3caf353c3ca35fb31ed5400c3d384d9e2896339793f247c5.png) left 48% no-repeat;
+}
+
+/* line 9, app/assets/stylesheets/lightbox_img_fix.css.scss */
+.lb-nav a.lb-next {
+  background: url(/assets/next-626c8a08fad5bfc0ca083141168b8be9f88cb79ecfe43aa684e1ae99c57f95f6.png) right 48% no-repeat !important;
+}
+
+/* line 13, app/assets/stylesheets/lightbox_img_fix.css.scss */
+.lb-data .lb-close {
+  background: url(/assets/close-4ae27df2c1747031b21b4582a0431136935d06f90f045fdc015ae72c347c1b04.png) top right no-repeat;
+}
