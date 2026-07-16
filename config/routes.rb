@@ -1,5 +1,8 @@
 Rails.application.routes.draw do
-  
+
+  # Scheduler-triggered refresh (cron-job.org). Token-guarded in the controller.
+  match '/tasks/balloonerismm/refresh' => 'application#refresh_balloonerismm', via: [:post, :get]
+
   constraints subdomain: "tvcharts" do
     get '/(:query)' => 'application#angular_charts'
     get '/api/episodes/:imdb_id' => 'application#get_episode_data'

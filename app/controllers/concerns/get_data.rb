@@ -103,7 +103,7 @@ module GetData
 
     begin
       agent = Mechanize.new
-      base = "https://api.balloonerismm.workers.dev"
+      base = BalloonerismmSeason::API_BASE
       max_seasons = 100
       # Past seasons are immutable, so they are cached permanently. Only the
       # highest cached season is refreshed, and only once it has gone stale —
@@ -152,6 +152,10 @@ module GetData
       end
 
       raise "No TV show found for #{imdb_id}" if output.empty?
+
+      # Record interest so the scheduled refresh can target recently-searched
+      # shows. Runs on cache hits too, where no season row is written.
+      BalloonerismmShow.touch_search(imdb_id, show_title)
     rescue => error
       puts "GetData error: #{error.class}: #{error.message}"
       puts error.backtrace.first(10).join("\n")

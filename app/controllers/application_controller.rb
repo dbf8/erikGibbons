@@ -12,7 +12,33 @@ class ApplicationController < ActionController::Base
     response.headers['Pragma'] = 'no-cache'
     response.headers['Expires'] = '0'
   end
-  
+
+  # Scheduler-triggered (e.g. cron-job.org) refresh of recently-searched shows.
+  # Guarded by a shared secret; runs in the background so the trigger returns
+  # immediately rather than holding the request open for the whole job.
+  def refresh_balloonerismm
+    token = request.headers['X-Refresh-Token'].presence || params[:token].presence
+    expected = ENV['REFRESH_TOKEN'].presence
+    unless expected && token && ActiveSupport::SecurityUtils.secure_compare(token, expected)
+      return head :unauthorized
+    end
+
+    Thread.new do
+      Rails.application.executor.wrap do
+        BalloonerismmShow.refresh_due!(
+          within: (ENV['REFRESH_WINDOW_HOURS'] || '24').to_f.hours,
+          limit: (ENV['REFRESH_MAX_SHOWS'] || '25').to_i,
+          sleep_between: (ENV['REFRESH_SLEEP_SECONDS'] || '0.5').to_f,
+          logger: Rails.logger
+        )
+      rescue => e
+        Rails.logger.error("[balloonerismm:refresh] #{e.class}: #{e.message}")
+      end
+    end
+
+    render json: { status: 'accepted' }, status: :accepted
+  end
+
   # send the user to the angular application by default
   def angular
     @angular_app = "ErikGibbons"
