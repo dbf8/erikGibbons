@@ -394,7 +394,7 @@ angular.module('TVCharts.Charts', [
         yAxes: [{
           scaleLabel: {
             display: true,
-            labelString: "TMDB Rating"
+            labelString: "IMDB Rating"
           },
           ticks: {
             min: 0,

@@ -85,6 +85,92 @@ module GetData
     return output
   end
 
+  def get_balloonerismm_info(imdb_id, show_title)
+    monotonic = ->{ Process.clock_gettime(Process::CLOCK_MONOTONIC) }
+    wall_start = monotonic.call
+    requests = []
+    sleep_total = 0.0
+
+    timed_get = lambda do |agent, label, url|
+      t0 = monotonic.call
+      response = agent.get(url)
+      elapsed_ms = ((monotonic.call - t0) * 1000).round(1)
+      requests << { label: label, ms: elapsed_ms, bytes: response.body.bytesize, status: response.code }
+      response.body
+    end
+
+    cache_hits = 0
+
+    begin
+      agent = Mechanize.new
+      base = "https://api.balloonerismm.workers.dev"
+      max_seasons = 100
+      # Past seasons are immutable, so they are cached permanently. Only the
+      # highest cached season is refreshed, and only once it has gone stale —
+      # that is where new episodes and rating changes still land.
+      latest_ttl = 7.days
+
+      cached = BalloonerismmSeason.where(imdb_id: imdb_id).index_by(&:season_number)
+      highest_cached = cached.keys.max
+
+      output = {}
+      season_number = 1
+      while season_number <= max_seasons
+        row = cached[season_number]
+        is_latest_cached = row && season_number == highest_cached
+        fresh = row && (!is_latest_cached || row.updated_at > latest_ttl.ago)
+
+        if fresh
+          episodes = row.episodes_data
+          cache_hits += 1
+        else
+          body = timed_get.call(agent, "season-#{season_number}", "#{base}/tv/#{imdb_id}/season/#{season_number}?language=en-US")
+          season = JSON.parse(body)
+          episodes = season['episodes'] || []
+          # Empty `episodes` is the API's stub for "no data for this season" — also our stop signal.
+          break if episodes.empty?
+
+          BalloonerismmSeason.upsert_season(imdb_id, season_number, episodes)
+
+          t_sleep = monotonic.call
+          sleep 0.1
+          sleep_total += monotonic.call - t_sleep
+        end
+
+        output[season_number.to_s] = episodes.map do |ep|
+          {
+            "Show Title" => show_title,
+            "Title" => ep['name'],
+            "Released" => ep['air_date'],
+            "Episode" => ep['episode_number'].to_s,
+            "imdbRating" => ep['vote_average'].to_s,
+            "imdbId" => ep['id']
+          }
+        end
+
+        season_number += 1
+      end
+
+      raise "No TV show found for #{imdb_id}" if output.empty?
+    rescue => error
+      puts "GetData error: #{error.class}: #{error.message}"
+      puts error.backtrace.first(10).join("\n")
+      output = { '1': [{ "Show Title" => "Error retrieving show data", "Title" => "N/A", "Released" => '1970-01-01', "Episode" => "1", "imdbRating" => "0.0", "imdbId" => "N/A" }]}
+    end
+
+    wall_ms = ((monotonic.call - wall_start) * 1000).round(1)
+    http_ms = requests.sum { |r| r[:ms] }.round(1)
+    bytes_total = requests.sum { |r| r[:bytes] }
+    sleep_ms = (sleep_total * 1000).round(1)
+    overhead_ms = (wall_ms - http_ms - sleep_ms).round(1)
+    avg_ms = requests.empty? ? 0 : (http_ms / requests.size).round(1)
+
+    puts "[balloonerismm] #{imdb_id} #{show_title.inspect}: #{requests.size} reqs, #{cache_hits} cached, wall=#{wall_ms}ms (http=#{http_ms}ms avg=#{avg_ms}ms, sleep=#{sleep_ms}ms, other=#{overhead_ms}ms), #{bytes_total}B"
+    requests.each { |r| puts "  - #{r[:label]} [#{r[:status]}]: #{r[:ms]}ms, #{r[:bytes]}B" }
+
+    return output
+  end
+
 
   ### DEPRECATED IMDB-SCRAPER
   # def get_episode_info(imdb_id, show_title)

@@ -10,7 +10,16 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[7.1].define(version: 2026_04_09_021531) do
+ActiveRecord::Schema[8.0].define(version: 2026_07_15_120000) do
+  create_table "balloonerismm_seasons", force: :cascade do |t|
+    t.string "imdb_id", null: false
+    t.integer "season_number", null: false
+    t.text "episodes", null: false
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["imdb_id", "season_number"], name: "index_balloonerismm_seasons_on_imdb_id_and_season_number", unique: true
+  end
+
   create_table "tmdb_imdb_mappings", force: :cascade do |t|
     t.integer "tmdb_episode_id"
     t.string "imdb_id"
@@ -18,5 +27,4 @@ ActiveRecord::Schema[7.1].define(version: 2026_04_09_021531) do
     t.datetime "updated_at", null: false
     t.index ["tmdb_episode_id"], name: "index_tmdb_imdb_mappings_on_tmdb_episode_id", unique: true
   end
-
 end

@@ -47,7 +47,7 @@ class ApplicationController < ActionController::Base
   end
 
   def get_episode_data
-    data_hash = get_tmdb_info(params['imdb_id'], params['title'])
+    data_hash = get_balloonerismm_info(params['imdb_id'], params['title'])
 
     render :json => data_hash
   end
@@ -57,7 +57,7 @@ class ApplicationController < ActionController::Base
     data_arr = []
     for q in queries do
       imdb_id, title = q.split(",")
-      data_arr << get_tmdb_info(imdb_id, title)
+      data_arr << get_balloonerismm_info(imdb_id, title)
     end
 
     render :json => data_arr
