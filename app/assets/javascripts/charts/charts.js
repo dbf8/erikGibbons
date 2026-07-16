@@ -64,7 +64,7 @@ angular.module('TVCharts.Charts', [
             '<h2 style="margin: 0; font-weight: 500;">NOTES</h2>' +
           '</div>' +
           '<md-dialog-content style="padding: 16px 24px;">' +
-            '<p>Shows that have never been searched before will take longer to load while IMDb IDs are gathered.</p>' +
+            '<p>Shows that have never been searched before will take longer to load while scores are cached on a weekly basis.</p>' +
             '<br><br>' +
           '</md-dialog-content>' +
           '<md-dialog-actions style="justify-content: space-between; padding: 8px 16px;">' +
