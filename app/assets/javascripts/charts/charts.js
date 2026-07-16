@@ -909,8 +909,8 @@ angular.module('TVCharts.Charts', [
       // for each season
       var i = 0;
       seasons_i.forEach(function(s){
-        series_labels_i.push("Season " + s.padStart(2, '0'));
         var season_ix = parseInt(s) - 1;
+        var aired_in_season = 0;
         // for each episode
         series[s].forEach(function(e){
           // skip episodes that haven't aired yet
@@ -924,8 +924,16 @@ angular.module('TVCharts.Charts', [
           e['season'] = s;
           ep_data_i[season_ix].push(e);
           i++;
+          aired_in_season++;
           // push in imdb rating value if correct dataset -- otherwise, push NaN
         });
+        // Only label seasons that actually produced data. Seasons with no aired
+        // episodes have their dataset filtered out below, so labeling them would
+        // leave series_labels longer than the dataset list and desync the color
+        // indexing in set_dataset_override (colors[undefined] -> crash).
+        if(aired_in_season > 0){
+          series_labels_i.push("Season " + s.padStart(2, '0'));
+        }
       });
       
       // remove any seasons with empty data
