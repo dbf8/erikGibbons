@@ -18,6 +18,10 @@ module GetData
       raise "No rated episodes in dataset for #{imdb_id}" if ratings_by_season.empty?
 
       agent   = Mechanize.new
+      # Bound each OMDB call so a slow/hanging season fails fast; OmdbSeason then
+      # fails soft (ratings still render) rather than stalling the whole request.
+      agent.open_timeout = 5
+      agent.read_timeout = 8
       seasons = ratings_by_season.keys.map(&:to_i)
       air     = OmdbSeason.episodes_for(imdb_id, seasons, agent: agent)
 

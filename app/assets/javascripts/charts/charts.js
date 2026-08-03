@@ -365,7 +365,8 @@ angular.module('TVCharts.Charts', [
           },
           afterLabel: function(tooltipItem){
             if((tooltipItem.datasetIndex % 2) == 0){
-              return "Aired: " + ep_data[tooltipItem.datasetIndex / 2][tooltipItem.index]["Released"];
+              var released = ep_data[tooltipItem.datasetIndex / 2][tooltipItem.index]["Released"];
+              return "Aired: " + (released || "Unknown");
             }else{
               return "";
             }
@@ -916,9 +917,12 @@ angular.module('TVCharts.Charts', [
         var aired_in_season = 0;
         // for each episode
         series[s].forEach(function(e){
-          // skip episodes that haven't aired yet
+          // Only skip episodes with a KNOWN, future air date. Every episode here
+          // has an IMDb rating, so it aired; OMDB simply lacks air dates for some
+          // (often older/obscure) titles, and a missing date must not hide a
+          // rated episode from the chart.
           var airDate = e['Released'] ? new Date(e['Released']) : null;
-          if (!airDate || isNaN(airDate.getTime()) || airDate > new Date()) { return; }
+          if (airDate && !isNaN(airDate.getTime()) && airDate > new Date()) { return; }
 
           label_store_i.push("S" + s.padStart(2, '0') + "E" + e.Episode.padStart(2, '0'));
           // season_ix * 2 because each season has two datasets (ep_data and best fit)
@@ -942,6 +946,14 @@ angular.module('TVCharts.Charts', [
       // remove any seasons with empty data
       datasets_i = datasets_i.filter(function(arr){
         return arr[0] != null;
+      });
+      // Keep ep_data aligned with the filtered datasets. A season that produced
+      // no aired episodes (e.g. air dates temporarily unavailable) leaves an
+      // empty ep_data slot; dropping it in lockstep prevents the datasetIndex/2
+      // lookups from desyncing (which surfaces as "undefined" legend entries and
+      // mismatched trend-line colors on later seasons).
+      ep_data_i = ep_data_i.filter(function(arr){
+        return arr.length > 0;
       });
       
       // dataset = [[{ x, y },{...}], [ { best fit x, y } ], [{..}]] // alternates: dataset[0] is array of episode data, dataset[1] is array of best fit for dataset[0]
