@@ -12,7 +12,9 @@ test:
   database: db/test.sqlite3
 
 production:
-  adapter: libsql
-  pool: 5
-  host: <%= ENV['TURSO_DATABASE_URL'] %>
-  auth_token: <%= ENV['TURSO_AUTH_TOKEN'] %>
+  <<: *default
+  # Local SQLite on the app's filesystem. The ratings table is rebuilt from the
+  # IMDb datasets at deploy time (rake imdb:seed); air dates are a lazy OMDB
+  # cache that re-warms after each deploy. Nothing here needs to survive a
+  # deploy, so no external database is required.
+  database: db/production.sqlite3

@@ -5,9 +5,6 @@ gem 'rails', '~> 8.0.0'
 
 gem 'sqlite3'
 
-# Turso (libSQL) database support
-gem 'libsql_activerecord'
-
 # use rack-cors to handle cross-origin requests
 gem 'rack-cors'
 
