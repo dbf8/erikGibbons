@@ -36,9 +36,17 @@ angular.module('TVCharts.Charts', [
   chartsCtrl.setOptSelect = setOptSelect;
   chartsCtrl.scrubDatasets = scrubDatasets;
   chartsCtrl.showHelp = showHelp;
+  chartsCtrl.search = search;
+  chartsCtrl.detectSearchInput = detectSearchInput;
+  chartsCtrl.toggleTheme = toggleTheme;
   chartsCtrl.myCharts = {};
   chartsCtrl.loading = false;
   chartsCtrl.showCanvas = false;
+  chartsCtrl.error_message = '';
+  chartsCtrl.search_query = '';
+  chartsCtrl.search_is_imdb = false;
+  chartsCtrl.search_hint = 'Search by title, IMDb ID, or IMDb URL';
+  chartsCtrl.summary_cards = [];
   chartsCtrl.series_list = [];
   chartsCtrl.datasets = [];
   chartsCtrl.labels = [];
@@ -48,8 +56,15 @@ angular.module('TVCharts.Charts', [
   chartsCtrl.compNormType = 's-left';
   chartsCtrl.compSeasonAlign = 'left';
   chartsCtrl.compEpAlign = 'left';
-  chartsCtrl.connectSeasons = false;
-  chartsCtrl.fill = true;
+  chartsCtrl.connectSeasons = true;
+  chartsCtrl.fill = false;
+  chartsCtrl.focusedScale = false;
+  try {
+    var storedTheme = $window.localStorage.getItem('tvcharts-theme');
+    chartsCtrl.darkMode = storedTheme ? storedTheme == 'dark' : ($window.matchMedia && $window.matchMedia('(prefers-color-scheme: dark)').matches);
+  } catch(e) {
+    chartsCtrl.darkMode = false;
+  }
 
   // comparison possibilities
   // 1. Normalization: full, season-left, season-right
@@ -81,11 +96,12 @@ angular.module('TVCharts.Charts', [
   }
 
   function init() {
-    var shows = $state.params['query'].split(",")
-    paramsMap = shows.map(function(el){
-      imdb_id = null;
-      series = null;
-      year = null;
+    var query = $state.params['query'] || '';
+    var shows = query.split(",");
+    var paramsMap = shows.map(function(el){
+      var imdb_id = null;
+      var series = null;
+      var year = null;
       if(el.match(/i=/)){
         imdb_id = el.match(/i=([^&]*)/)[1];
       }
@@ -101,7 +117,7 @@ angular.module('TVCharts.Charts', [
       if(series != null || imdb_id != null){
         return [series, year, imdb_id]
       }
-    });
+    }).filter(function(el){ return el != null; });
     if(paramsMap[0] != undefined){
       get_trend_from_url(paramsMap);
     }
@@ -112,6 +128,43 @@ angular.module('TVCharts.Charts', [
   /*********************
   *  Private functions *
   * *******************/
+
+  function extractImdbId(value){
+    var input = (value || '').trim();
+    var directMatch = input.match(/^(tt\d{7,10})$/i);
+    var urlMatch = input.match(/imdb\.com\/title\/(tt\d{7,10})/i);
+    var match = directMatch || urlMatch;
+    return match ? match[1].toLowerCase() : null;
+  }
+
+  function detectSearchInput(){
+    var imdbId = extractImdbId(chartsCtrl.search_query);
+    chartsCtrl.search_is_imdb = imdbId != null;
+    chartsCtrl.search_hint = imdbId ? 'IMDb ID detected: ' + imdbId : 'Title search — year can help distinguish remakes';
+    return imdbId;
+  }
+
+  function search(add){
+    var query = (chartsCtrl.search_query || '').trim();
+    if(!query || chartsCtrl.loading){ return; }
+
+    var imdbId = extractImdbId(query);
+    chartsCtrl.search_is_imdb = imdbId != null;
+    chartsCtrl.error_message = '';
+    get_trend(imdbId ? null : query, imdbId ? null : chartsCtrl.year, imdbId, add === true);
+  }
+
+  function toggleTheme(){
+    chartsCtrl.darkMode = !chartsCtrl.darkMode;
+    try {
+      $window.localStorage.setItem('tvcharts-theme', chartsCtrl.darkMode ? 'dark' : 'light');
+    } catch(e) { /* local storage may be unavailable */ }
+
+    if(chartsCtrl.options_object){
+      set_options(chartsCtrl.options_object);
+      set_dataset_override(chartsCtrl.chart_title.length > 1);
+    }
+  }
 
   function setOptSelect(){
     if(chartsCtrl.compType == 's-align'){
@@ -136,10 +189,11 @@ angular.module('TVCharts.Charts', [
   function get_trend_from_url(arr){
     var canvas = document.getElementById('chart');
     chartsCtrl.loading = true;
+    chartsCtrl.error_message = '';
     chartsCtrl.watch_link = [];
-    paramsArr = arr.map(function(el){
+    var paramsArr = arr.map(function(el){
       if(!el[2]){
-        param = 't=' + encodeURIComponent(el[0])
+        var param = 't=' + encodeURIComponent(el[0]);
         if(el[1]){
           param += '&y=' + el[1];
         }
@@ -155,32 +209,42 @@ angular.module('TVCharts.Charts', [
         chartsCtrl.loading = false;
         chartsCtrl.showCanvas = false;
         chartsCtrl.series_list = {};
-        // [chartsCtrl.loading, chartsCtrl.showCanvas, chartsCtrl.series_list] = returnError()
         if(canvas){
           var ctx = canvas.getContext('2d');
-          ctx.clearRect(0, 0, ctx.canvas.width, ctx.canvas.height)
+          ctx.clearRect(0, 0, ctx.canvas.width, ctx.canvas.height);
         }
-        chartsCtrl.chart_title.push(["Series not found", "#"]);
+        chartsCtrl.error_message = 'We could not find that series. Check the title or IMDb ID and try again.';
         return false;
       }
 
-      episodeQuery = response.data.map(function(el){ return [el.imdbID, el.Title] });
+      var episodeQuery = response.data.map(function(el){ return [el.imdbID, el.Title] });
       chartsCtrl.imdbId = episodeQuery.map(function(el){ return el[0] });
       chartsCtrl.chart_title = episodeQuery.map(function(el){ return [el[1], "https://www.justwatch.com/us/search?q=" + encodeURI(el[1])] });
+      chartsCtrl.search_query = episodeQuery[0][1];
+      detectSearchInput();
       
       // get actual episode data
       episodesFactory.getEpisodesBatch(episodeQuery.join("|"))
       .then(function(response){
-        chartsCtrl.series_list = response.data
+        chartsCtrl.series_list = response.data;
 
         // draw chart
         organize_chart_data(chartsCtrl.series_list);
-      })
+      });
+    })
+    ['catch'](function(err){
+      $log.log('get_trend_from_url error: ' + err);
+      chartsCtrl.loading = false;
+      chartsCtrl.showCanvas = false;
+      chartsCtrl.error_message = 'Something went wrong while loading the series. Please try again.';
     });
   }
 
   function get_trend(series, year, imdb_id, add) {
     var canvas = document.getElementById('chart');
+    var existingSeries = chartsCtrl.series_list.slice ? chartsCtrl.series_list.slice() : [];
+    var existingTitles = chartsCtrl.chart_title.slice();
+    var existingIds = chartsCtrl.imdbId.slice();
     if(!add){
       // if this isn't an additive function, start over
       chartsCtrl.chart_title = [];
@@ -192,17 +256,19 @@ angular.module('TVCharts.Charts', [
       // destroy existing chart via angular-chart.js event
       $scope.$broadcast('chart-destroy');
     }
+    chartsCtrl.error_message = '';
     // set params
+    var params;
     if(!imdb_id){
-      var params = 't=' + encodeURIComponent(series);
+      params = 't=' + encodeURIComponent(series);
       if(year){
         params = params + '&y=' + year;
       }
     }else{
-      var params = 'i=' + imdb_id;
+      params = 'i=' + imdb_id;
     }
     // set url based on params provided
-    window.history.pushState('abcdef', 'Title', '/' + [params, chartsCtrl.imdbId.map(function(el){ return 'i=' + el }).join(',')].filter(function(el){ return el }).join(','));
+    $window.history.pushState(null, 'TV Show Trends', '/' + [params, chartsCtrl.imdbId.map(function(el){ return 'i=' + el }).join(',')].filter(function(el){ return el; }).join(','));
     chartsCtrl.loading = true;
 
     // get imdb ID and clean title
@@ -210,21 +276,29 @@ angular.module('TVCharts.Charts', [
     .then(function(response){
       if(response.data.Response == "False"){
         chartsCtrl.loading = false;
-        chartsCtrl.showCanvas = false;
-        chartsCtrl.series_list = [];
-        if(canvas){
+        chartsCtrl.error_message = 'We could not find that series. Check the title or IMDb ID and try again.';
+        if(add){
+          chartsCtrl.series_list = existingSeries;
+          chartsCtrl.chart_title = existingTitles;
+          chartsCtrl.imdbId = existingIds;
+        }else{
+          chartsCtrl.showCanvas = false;
+          chartsCtrl.series_list = [];
+        }
+        if(canvas && !add){
           canvas.getContext('2d').clearRect(0, 0, canvas.width, canvas.height);
         }
-        chartsCtrl.chart_title.push(["Series not found", "#"]);
         return;
       }
-      var imdb_id = response.data.imdbID;
-      chartsCtrl.imdbId.push(imdb_id);
+      var resolvedImdbId = response.data.imdbID;
+      chartsCtrl.imdbId.push(resolvedImdbId);
       var title = response.data.Title;
       chartsCtrl.chart_title.push([title, "https://www.justwatch.com/us/search?q=" + encodeURI(title)]);
+      chartsCtrl.search_query = title;
+      detectSearchInput();
 
       // get actual episode data
-      return episodesFactory.getEpisodes(imdb_id, title)
+      return episodesFactory.getEpisodes(resolvedImdbId, title)
       .then(function(response){
         chartsCtrl.series_list.push(response.data);
         organize_chart_data(chartsCtrl.series_list);
@@ -233,42 +307,66 @@ angular.module('TVCharts.Charts', [
     ['catch'](function(err) {
       $log.log('get_trend error: ' + err);
       chartsCtrl.loading = false;
-      chartsCtrl.showCanvas = false;
-      chartsCtrl.series_list = [];
-      if(canvas){
+      chartsCtrl.error_message = 'Something went wrong while loading the series. Please try again.';
+      if(add){
+        chartsCtrl.series_list = existingSeries;
+        chartsCtrl.chart_title = existingTitles;
+        chartsCtrl.imdbId = existingIds;
+      }else{
+        chartsCtrl.showCanvas = false;
+        chartsCtrl.series_list = [];
+      }
+      if(canvas && !add){
         canvas.getContext('2d').clearRect(0, 0, canvas.width, canvas.height);
       }
-      chartsCtrl.chart_title.push(["Error loading series data", "#"]);
       if(!$scope.$$phase){ $scope.$apply(); }
     });
   }
   
   function set_options(opts){
     var seasons = opts['seasons'];
+    var ep_data;
     if(chartsCtrl.connectSeasons){
-      shows = [...new Set(opts['ep_data'].flat().map(function(e){ return e['Show Title'] }) )];
-      var ep_data = [];
+      var shows = [...new Set(opts['ep_data'].flat().map(function(e){ return e['Show Title']; }) )];
+      ep_data = [];
       opts['ep_data'].flat().forEach(function(e){
-        var arr = ep_data[shows.indexOf(e['Show Title'])]
+        var arr = ep_data[shows.indexOf(e['Show Title'])];
         if(!arr){
           ep_data.push([e]);
         }else{
           arr.push(e);
         }
-      })
+      });
     }else{
-      var ep_data = opts['ep_data'];
+      ep_data = opts['ep_data'];
     }
 
+    var label_store;
     if(chartsCtrl.chart_title.length > 1){
-      var label_store = []
+      label_store = [];
       for(var i = 0; i < opts['label_store'].length; i++){
-        label_store.push(i)
+        label_store.push(i + 1);
       }
     }else{
-      var label_store = opts['label_store'];
+      label_store = opts['label_store'];
     }
     var link_base = "https://www.imdb.com/title/";
+    var ratings = ep_data.flat().map(function(e){ return parseFloat(e['imdbRating']); }).filter(function(rating){ return !isNaN(rating); });
+    var lowestRating = ratings.length ? Math.min.apply(null, ratings) : 5;
+    var axisMinimum = chartsCtrl.focusedScale ? (lowestRating < 5 ? Math.floor(lowestRating) : 5) : 0;
+    var theme = chartsCtrl.darkMode ? {
+      text: 'rgba(245,247,250,0.88)',
+      muted: 'rgba(226,232,240,0.62)',
+      grid: 'rgba(226,232,240,0.13)',
+      tooltip: 'rgba(15,23,42,0.96)'
+    } : {
+      text: 'rgba(30,41,59,0.88)',
+      muted: 'rgba(71,85,105,0.68)',
+      grid: 'rgba(71,85,105,0.14)',
+      tooltip: 'rgba(15,23,42,0.94)'
+    };
+
+    chartsCtrl.rating_axis_min = axisMinimum;
     
     chartsCtrl.options = {
       elements: {
@@ -279,6 +377,7 @@ angular.module('TVCharts.Charts', [
       legend: {
         display: true,
         labels: {
+          fontColor: theme.text,
           generateLabels: function(chart){
             var theHelp = Chart.helpers;
             var data = chart.data;
@@ -307,7 +406,7 @@ angular.module('TVCharts.Charts', [
             return [];
           },
           filter: function(legendItem, chartData){
-            if(legendItem.text != "trend"){
+            if(legendItem.text.indexOf(' trend') == -1){
               return true;
             }
           }
@@ -328,9 +427,11 @@ angular.module('TVCharts.Charts', [
           }
           // hide/unhide associated trend dataset
           if(chartsCtrl.trends){
-            metaTrend.hidden = metaTrend.hidden === null ? !ci.data.datasets[index + 1].hidden : null;
+            if(metaTrend){
+              metaTrend.hidden = metaTrend.hidden === null ? !ci.data.datasets[index + 1].hidden : null;
+            }
           }else{
-            metaTrend.hidden = true;
+            if(metaTrend){ metaTrend.hidden = true; }
           }
           
           ci.update();
@@ -341,6 +442,9 @@ angular.module('TVCharts.Charts', [
       },
 			tooltips: {
 			  mode: 'single',
+        backgroundColor: theme.tooltip,
+        titleFontColor: 'rgba(255,255,255,0.96)',
+        bodyFontColor: 'rgba(255,255,255,0.92)',
         callbacks: {
           title: function(tooltipItem) {
             if(tooltipItem[0] != undefined){
@@ -390,20 +494,26 @@ angular.module('TVCharts.Charts', [
             maxRotation: 75,
             minRotation: 25,
             stepSize: 1,
+            fontColor: theme.muted,
             userCallback: function(label, index, labels){
               return label_store[label];
             }
-          }
+          },
+          gridLines: { color: theme.grid }
         }],
         yAxes: [{
           scaleLabel: {
             display: true,
-            labelString: "IMDB Rating"
+            labelString: "IMDb rating",
+            fontColor: theme.muted
           },
           ticks: {
-            min: 0,
-            max: 10
-          }
+            min: axisMinimum,
+            max: 10,
+            stepSize: axisMinimum < 3 ? 2 : 1,
+            fontColor: theme.muted
+          },
+          gridLines: { color: theme.grid }
         }]
       },
       onClick: function(ev, el){
@@ -418,51 +528,54 @@ angular.module('TVCharts.Charts', [
   }
   
   function set_dataset_override(multi){
-    opts = chartsCtrl.options_object;
+    var opts = chartsCtrl.options_object;
 
     // ignore if opts isn't set yet
     if(opts == null){
       return true;
     }
+    var series_labels;
     if(chartsCtrl.connectSeasons){
-      var series_labels = [...new Set(opts['ep_data'].map(function(e){ return e[0]['Show Title'] }) )];
+      series_labels = [...new Set(opts['ep_data'].map(function(e){ return e[0]['Show Title']; }) )];
     }else{
-      var series_labels = opts['series_labels'];
+      series_labels = opts['series_labels'];
     }
     var colors = opts['colors'];
     
     chartsCtrl.dataset_override = [];
 
-    i = 0;
+    var i = 0;
     // handle seasons with one single episode
     chartsCtrl.datasets = chartsCtrl.datasets.filter(function(e){ return e.length > 0 });
 
-    titles = chartsCtrl.datasets.filter(function(e){ return e[0]['type'] == "ep" }).map(function(e){ return e[0]['show'] });
-    titlesUniq = [...new Set(titles)]
+    var titles = chartsCtrl.datasets.filter(function(e){ return e[0]['type'] == "ep"; }).map(function(e){ return e[0]['show']; });
+    var titlesUniq = [...new Set(titles)];
     series_labels.forEach(function(s){
+      var colorIndex = multi ? titlesUniq.indexOf(titles[i]) : series_labels.indexOf(s);
+      var color = colors[Math.max(0, colorIndex)] || colors[0];
       chartsCtrl.dataset_override.push(
         {
           label: s,
           borderWidth: 2,
           type: "line",
-          borderColor: colors[multi ? titlesUniq.indexOf(titles[i]) : series_labels.indexOf(s)].replace("1)", "0.8)"),
-          backgroundColor: colors[multi ? titlesUniq.indexOf(titles[i]) : series_labels.indexOf(s)].replace("1)", "0.1)"),
-          pointBorderColor: colors[multi ? titlesUniq.indexOf(titles[i]) : series_labels.indexOf(s)].replace("1)", "0.8)"),
-          pointBackgroundColor: colors[multi ? titlesUniq.indexOf(titles[i]) : series_labels.indexOf(s)].replace("1)", "0.8)"),
-          pointHoverBorderColor: colors[multi ? titlesUniq.indexOf(titles[i]) : series_labels.indexOf(s)].replace("1)", "0.8)"),
-          pointHoverBackgroundColor: colors[multi ? titlesUniq.indexOf(titles[i]) : series_labels.indexOf(s)].replace("1)", "0.8)"),
+          borderColor: color.replace("1)", "0.88)"),
+          backgroundColor: color.replace("1)", "0.10)"),
+          pointBorderColor: color.replace("1)", "0.9)"),
+          pointBackgroundColor: color.replace("1)", "0.9)"),
+          pointHoverBorderColor: color,
+          pointHoverBackgroundColor: color,
+          fill: chartsCtrl.fill,
           hidden: !chartsCtrl.episode_data
         },{
-          label: "trend",
-          borderWidth: 1,
+          label: s + " trend",
+          borderWidth: 2,
           type: 'line',
           borderDash: [10,5],
-          borderColor: chartsCtrl.episode_data ? colors[multi ? titlesUniq.indexOf(titles[i]) : series_labels.indexOf(s)].replace("1)", "0.4)") : colors[multi ? titlesUniq.indexOf(titles[i]) : series_labels.indexOf(s)].replace("opac", "0.8"), // light trendlines unless only trendlines are being shown
-          backgroundColor: colors[multi ? titlesUniq.indexOf(titles[i]) : series_labels.indexOf(s)].replace("1)", "0.1)"),
-          pointBorderColor: colors[multi ? titlesUniq.indexOf(titles[i]) : series_labels.indexOf(s)].replace("1)", "0.5)"),
-          pointBackgroundColor: colors[multi ? titlesUniq.indexOf(titles[i]) : series_labels.indexOf(s)].replace("1)", "0.2)"),
-          pointHoverBorderColor: colors[multi ? titlesUniq.indexOf(titles[i]) : series_labels.indexOf(s)].replace("1)", "0.5)"),
-          pointHoverBackgroundColor: colors[multi ? titlesUniq.indexOf(titles[i]) : series_labels.indexOf(s)].replace("1)", "0.2)"),
+          borderColor: chartsCtrl.episode_data ? color.replace("1)", "0.58)") : color.replace("1)", "0.9)"),
+          backgroundColor: 'transparent',
+          pointRadius: 0,
+          pointHoverRadius: 0,
+          fill: false,
           hidden: !chartsCtrl.trends
         }
       );
@@ -863,19 +976,70 @@ angular.module('TVCharts.Charts', [
       return "rgba(" + String(Math.round(r * 255)) + "," + String(Math.round(g * 255)) + "," + String(Math.round(b * 255)) + ",1)";
     }
     
-    colors = [];
+    var colors = [];
     // cycle through and create colors
     if(n < 1) { return [hslToRgb(1.0, 1.0, .7)] }
     for(var i = 0; i < n; i++){
       colors.push(hslToRgb((i * (360.0 / n) % 360)/360.0,1.0,.4));
     }
 
-    // sort colors randomly
-    if(rnd){
-      return colors.sort(function(){ return Math.random() - 0.5 });
-    }else{
-      return colors
+    return colors;
+  }
+
+  function updateSummaryCards(raw){
+    var stats = raw.map(function(series, seriesIndex){
+      var episodes = [];
+      Object.keys(series).sort(function(a, b){ return parseInt(a) - parseInt(b); }).forEach(function(season){
+        series[season].forEach(function(episode){
+          var rating = parseFloat(episode['imdbRating']);
+          if(isNaN(rating)){ return; }
+          episodes.push({
+            rating: rating,
+            title: episode['Title'],
+            season: season,
+            episode: episode['Episode']
+          });
+        });
+      });
+
+      if(!episodes.length){ return null; }
+      var total = episodes.reduce(function(sum, episode){ return sum + episode.rating; }, 0);
+      var highest = episodes.reduce(function(best, episode){ return episode.rating > best.rating ? episode : best; }, episodes[0]);
+      return {
+        title: chartsCtrl.chart_title[seriesIndex] ? chartsCtrl.chart_title[seriesIndex][0] : 'Series ' + (seriesIndex + 1),
+        average: total / episodes.length,
+        highest: highest,
+        first: episodes[0].rating,
+        last: episodes[episodes.length - 1].rating,
+        count: episodes.length
+      };
+    }).filter(function(stat){ return stat != null; });
+
+    if(!stats.length){
+      chartsCtrl.summary_cards = [];
+      return;
     }
+
+    if(stats.length == 1){
+      var stat = stats[0];
+      var delta = stat.last - stat.first;
+      var direction = delta > 0.15 ? 'Rising' : (delta < -0.15 ? 'Falling' : 'Steady');
+      chartsCtrl.summary_cards = [
+        { label: 'Series average', value: stat.average.toFixed(1), context: stat.count + ' rated episodes' },
+        { label: 'Highest rated', value: stat.highest.rating.toFixed(1), context: (stat.highest.title || ('S' + stat.highest.season + ' E' + stat.highest.episode)) },
+        { label: 'Overall trend', value: direction, context: (delta >= 0 ? '+' : '') + delta.toFixed(1) + ' premiere to finale' }
+      ];
+      return;
+    }
+
+    var averages = stats.map(function(stat){ return stat.average; });
+    var finales = stats.map(function(stat){ return stat.last; });
+    var leader = stats.reduce(function(best, stat){ return stat.average > best.average ? stat : best; }, stats[0]);
+    chartsCtrl.summary_cards = [
+      { label: 'Average gap', value: (Math.max.apply(null, averages) - Math.min.apply(null, averages)).toFixed(1), context: 'rating points' },
+      { label: 'Higher average', value: leader.title, context: leader.average.toFixed(1) + ' average rating' },
+      { label: 'Finale gap', value: (Math.max.apply(null, finales) - Math.min.apply(null, finales)).toFixed(1), context: 'rating points' }
+    ];
   }
 
   function organize_chart_data(raw){
@@ -897,7 +1061,7 @@ angular.module('TVCharts.Charts', [
           delete series[season];
         }
       }
-      var seasons_i = Object.keys(series).sort(function(e){ parseInt(e) });
+      var seasons_i = Object.keys(series).sort(function(a, b){ return parseInt(a) - parseInt(b); });
       var series_labels_i = [];
       var label_store_i = [];
       var datasets_i = [];
@@ -913,7 +1077,7 @@ angular.module('TVCharts.Charts', [
       // for each season
       var i = 0;
       seasons_i.forEach(function(s){
-        var season_ix = parseInt(s) - 1;
+        var season_ix = seasons_i.indexOf(s);
         var aired_in_season = 0;
         // for each episode
         series[s].forEach(function(e){
@@ -966,6 +1130,10 @@ angular.module('TVCharts.Charts', [
 
     chartsCtrl.series_labels = series_labels;
 
+    // Connected seasons create one continuous episode line and one distinct
+    // full-series trendline per show, which is the clearest comparison view.
+    if(raw.length > 1){ chartsCtrl.connectSeasons = true; }
+
     if(chartsCtrl.chart_title.length > 1){
       chartsCtrl.colors = getColors(chartsCtrl.chart_title.length, false);
     }else{
@@ -975,6 +1143,7 @@ angular.module('TVCharts.Charts', [
     // { season #, {title, release, ep#, rating, id}, "S##E##", "Season ##", colors}
     chartsCtrl.options_object = { seasons: seasons, ep_data: ep_data, label_store: label_store, series_labels: series_labels, colors: chartsCtrl.colors, multi: raw.length > 1 ? true : false };
     chartsCtrl.datasets = scrubDatasets(chartsCtrl.datasets.flat());
+    updateSummaryCards(raw);
     chartsCtrl.loading = false;
     chartsCtrl.showCanvas = true;
     // window.history.pushState('/abcdef', 'Title', '/' + chartsCtrl.imdbId.map(function(el){ return 'i=' + el }).join(','));

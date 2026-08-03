@@ -8,7 +8,7 @@
     }
 
     factory.getEpisodes = function(imdb_id, title){
-      return $http.get(bustCache("api/episodes/" + imdb_id + "?title=" + title));
+      return $http.get(bustCache("api/episodes/" + imdb_id + "?title=" + encodeURIComponent(title)));
     }
 
     factory.getEpisodesBatch = function(params){
