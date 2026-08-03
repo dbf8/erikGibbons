@@ -91,6 +91,9 @@ angular.module('TVCharts.Charts', [
       }
       if(el.match(/t=/)){
         series = el.match(/t=([^&]*)/)[1];
+        // The title is stored URI-encoded in the URL; decode back to the raw
+        // title so it can be re-encoded cleanly when re-issued below.
+        try { series = decodeURIComponent(series); } catch(e) { /* leave as-is if malformed */ }
       }
       if(el.match(/y=/)){
         year = el.match(/y=(\d{2,4})/)[1];
@@ -136,7 +139,7 @@ angular.module('TVCharts.Charts', [
     chartsCtrl.watch_link = [];
     paramsArr = arr.map(function(el){
       if(!el[2]){
-        param = 't=' + encodeURI(el[0])
+        param = 't=' + encodeURIComponent(el[0])
         if(el[1]){
           param += '&y=' + el[1];
         }
@@ -191,7 +194,7 @@ angular.module('TVCharts.Charts', [
     }
     // set params
     if(!imdb_id){
-      var params = 't=' + encodeURI(series);
+      var params = 't=' + encodeURIComponent(series);
       if(year){
         params = params + '&y=' + year;
       }
