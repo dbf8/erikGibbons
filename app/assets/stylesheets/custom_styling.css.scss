@@ -788,6 +788,14 @@ md-switch {
     align-items: flex-start;
   }
 
+  .tv-results-heading {
+    flex-direction: column;
+  }
+
+  .tv-chart-title {
+    width: 100%;
+  }
+
   .tv-theme-toggle span {
     display: none;
   }
