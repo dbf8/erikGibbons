@@ -52,11 +52,12 @@ angular.module('TVCharts.Charts', [
   chartsCtrl.labels = [];
   chartsCtrl.series_labels = [];
   chartsCtrl.chart_title = [];
+  chartsCtrl.series_meta = [];
   chartsCtrl.compType = 'norm';
   chartsCtrl.compNormType = 's-left';
   chartsCtrl.compSeasonAlign = 'left';
   chartsCtrl.compEpAlign = 'left';
-  chartsCtrl.connectSeasons = true;
+  chartsCtrl.connectSeasons = false;
   chartsCtrl.fill = false;
   chartsCtrl.focusedScale = false;
   try {
@@ -140,8 +141,33 @@ angular.module('TVCharts.Charts', [
   function detectSearchInput(){
     var imdbId = extractImdbId(chartsCtrl.search_query);
     chartsCtrl.search_is_imdb = imdbId != null;
-    chartsCtrl.search_hint = imdbId ? 'IMDb ID detected: ' + imdbId : 'Title search — year can help distinguish remakes';
+    chartsCtrl.search_hint = imdbId ? 'IMDb ID detected: ' + imdbId : 'Year can distinguish any shows that share a title';
     return imdbId;
+  }
+
+  function seriesYear(value){
+    var match = String(value || '').match(/\d{4}/);
+    return match ? match[0] : '';
+  }
+
+  function updateChartTitles(){
+    var titleCounts = {};
+    chartsCtrl.series_meta.forEach(function(meta){
+      titleCounts[meta.title] = (titleCounts[meta.title] || 0) + 1;
+    });
+    chartsCtrl.chart_title = chartsCtrl.series_meta.map(function(meta){
+      var displayTitle = meta.title;
+      if(titleCounts[meta.title] > 1 && meta.year){
+        displayTitle += ' (' + meta.year + ')';
+      }
+      return [displayTitle, 'https://www.justwatch.com/us/search?q=' + encodeURIComponent(meta.title)];
+    });
+  }
+
+  function clearSearchFields(){
+    chartsCtrl.search_query = '';
+    chartsCtrl.year = null;
+    detectSearchInput();
   }
 
   function search(add){
@@ -218,10 +244,12 @@ angular.module('TVCharts.Charts', [
       }
 
       var episodeQuery = response.data.map(function(el){ return [el.imdbID, el.Title] });
+      chartsCtrl.series_meta = response.data.map(function(el){
+        return { id: el.imdbID, title: el.Title, year: seriesYear(el.Year) };
+      });
       chartsCtrl.imdbId = episodeQuery.map(function(el){ return el[0] });
-      chartsCtrl.chart_title = episodeQuery.map(function(el){ return [el[1], "https://www.justwatch.com/us/search?q=" + encodeURI(el[1])] });
-      chartsCtrl.search_query = episodeQuery[0][1];
-      detectSearchInput();
+      updateChartTitles();
+      clearSearchFields();
       
       // get actual episode data
       episodesFactory.getEpisodesBatch(episodeQuery.join("|"))
@@ -245,6 +273,7 @@ angular.module('TVCharts.Charts', [
     var existingSeries = chartsCtrl.series_list.slice ? chartsCtrl.series_list.slice() : [];
     var existingTitles = chartsCtrl.chart_title.slice();
     var existingIds = chartsCtrl.imdbId.slice();
+    var existingMeta = chartsCtrl.series_meta.slice();
     if(!add){
       // if this isn't an additive function, start over
       chartsCtrl.chart_title = [];
@@ -252,6 +281,7 @@ angular.module('TVCharts.Charts', [
       chartsCtrl.datasets = [];
       chartsCtrl.series_list = [];
       chartsCtrl.imdbId = [];
+      chartsCtrl.series_meta = [];
       chartsCtrl.showCanvas = false;
       // destroy existing chart via angular-chart.js event
       $scope.$broadcast('chart-destroy');
@@ -267,8 +297,10 @@ angular.module('TVCharts.Charts', [
     }else{
       params = 'i=' + imdb_id;
     }
-    // set url based on params provided
-    $window.history.pushState(null, 'TV Show Trends', '/' + [params, chartsCtrl.imdbId.map(function(el){ return 'i=' + el }).join(',')].filter(function(el){ return el; }).join(','));
+    // Keep the URL in the same order as the displayed series so reloads retain
+    // the comparison order and color assignments.
+    var urlParams = add ? chartsCtrl.imdbId.map(function(el){ return 'i=' + el; }).concat([params]) : [params];
+    $window.history.pushState(null, 'TV Show Trends', '/' + urlParams.join(','));
     chartsCtrl.loading = true;
 
     // get imdb ID and clean title
@@ -281,6 +313,7 @@ angular.module('TVCharts.Charts', [
           chartsCtrl.series_list = existingSeries;
           chartsCtrl.chart_title = existingTitles;
           chartsCtrl.imdbId = existingIds;
+          chartsCtrl.series_meta = existingMeta;
         }else{
           chartsCtrl.showCanvas = false;
           chartsCtrl.series_list = [];
@@ -293,9 +326,9 @@ angular.module('TVCharts.Charts', [
       var resolvedImdbId = response.data.imdbID;
       chartsCtrl.imdbId.push(resolvedImdbId);
       var title = response.data.Title;
-      chartsCtrl.chart_title.push([title, "https://www.justwatch.com/us/search?q=" + encodeURI(title)]);
-      chartsCtrl.search_query = title;
-      detectSearchInput();
+      chartsCtrl.series_meta.push({ id: resolvedImdbId, title: title, year: seriesYear(response.data.Year) });
+      updateChartTitles();
+      clearSearchFields();
 
       // get actual episode data
       return episodesFactory.getEpisodes(resolvedImdbId, title)
@@ -312,9 +345,13 @@ angular.module('TVCharts.Charts', [
         chartsCtrl.series_list = existingSeries;
         chartsCtrl.chart_title = existingTitles;
         chartsCtrl.imdbId = existingIds;
+        chartsCtrl.series_meta = existingMeta;
       }else{
         chartsCtrl.showCanvas = false;
         chartsCtrl.series_list = [];
+        chartsCtrl.series_meta = [];
+        chartsCtrl.chart_title = [];
+        chartsCtrl.imdbId = [];
       }
       if(canvas && !add){
         canvas.getContext('2d').clearRect(0, 0, canvas.width, canvas.height);
@@ -327,10 +364,10 @@ angular.module('TVCharts.Charts', [
     var seasons = opts['seasons'];
     var ep_data;
     if(chartsCtrl.connectSeasons){
-      var shows = [...new Set(opts['ep_data'].flat().map(function(e){ return e['Show Title']; }) )];
+      var shows = [...new Set(opts['ep_data'].flat().map(function(e){ return e['_seriesKey']; }) )];
       ep_data = [];
       opts['ep_data'].flat().forEach(function(e){
-        var arr = ep_data[shows.indexOf(e['Show Title'])];
+        var arr = ep_data[shows.indexOf(e['_seriesKey'])];
         if(!arr){
           ep_data.push([e]);
         }else{
@@ -536,7 +573,7 @@ angular.module('TVCharts.Charts', [
     }
     var series_labels;
     if(chartsCtrl.connectSeasons){
-      series_labels = [...new Set(opts['ep_data'].map(function(e){ return e[0]['Show Title']; }) )];
+      series_labels = chartsCtrl.chart_title.map(function(title){ return title[0]; });
     }else{
       series_labels = opts['series_labels'];
     }
@@ -1033,12 +1070,16 @@ angular.module('TVCharts.Charts', [
     }
 
     var averages = stats.map(function(stat){ return stat.average; });
-    var finales = stats.map(function(stat){ return stat.last; });
     var leader = stats.reduce(function(best, stat){ return stat.average > best.average ? stat : best; }, stats[0]);
+    var finaleLeader = stats.reduce(function(best, stat){ return stat.last > best.last ? stat : best; }, stats[0]);
+    var finaleTrailer = stats.reduce(function(worst, stat){ return stat.last < worst.last ? stat : worst; }, stats[0]);
+    var finaleGap = finaleLeader.last - finaleTrailer.last;
     chartsCtrl.summary_cards = [
       { label: 'Average gap', value: (Math.max.apply(null, averages) - Math.min.apply(null, averages)).toFixed(1), context: 'rating points' },
       { label: 'Higher average', value: leader.title, context: leader.average.toFixed(1) + ' average rating' },
-      { label: 'Finale gap', value: (Math.max.apply(null, finales) - Math.min.apply(null, finales)).toFixed(1), context: 'rating points' }
+      finaleGap == 0
+        ? { label: 'Finale gap', value: 'Even', context: finaleLeader.last.toFixed(1) + ' rating' }
+        : { label: 'Finale gap', value: finaleLeader.title + ' +' + finaleGap.toFixed(1), context: finaleLeader.last.toFixed(1) + ' vs. ' + finaleTrailer.last.toFixed(1) }
     ];
   }
 
@@ -1054,7 +1095,9 @@ angular.module('TVCharts.Charts', [
     chartsCtrl.datasets = [];
     chartsCtrl.series_labels = [];
     
-    raw.forEach(function(series){
+    raw.forEach(function(series, seriesIndex){
+      var seriesKey = chartsCtrl.imdbId[seriesIndex] || ('series-' + seriesIndex);
+      var displayTitle = chartsCtrl.chart_title[seriesIndex] ? chartsCtrl.chart_title[seriesIndex][0] : ('Series ' + (seriesIndex + 1));
       // scrub raw to make sure we're not trying to get null data
       for(var season in series){
         if(series[season].length == 0){
@@ -1090,9 +1133,10 @@ angular.module('TVCharts.Charts', [
 
           label_store_i.push("S" + s.padStart(2, '0') + "E" + e.Episode.padStart(2, '0'));
           // season_ix * 2 because each season has two datasets (ep_data and best fit)
-          datasets_i[season_ix * 2].push({ x: i, y: parseFloat(e['imdbRating']), type: "ep", show: e['Show Title'], season: s, episode: e.Episode });
+          datasets_i[season_ix * 2].push({ x: i, y: parseFloat(e['imdbRating']), type: "ep", show: seriesKey, showTitle: displayTitle, season: s, episode: e.Episode });
 
           e['season'] = s;
+          e['_seriesKey'] = seriesKey;
           ep_data_i[season_ix].push(e);
           i++;
           aired_in_season++;
@@ -1103,7 +1147,7 @@ angular.module('TVCharts.Charts', [
         // leave series_labels longer than the dataset list and desync the color
         // indexing in set_dataset_override (colors[undefined] -> crash).
         if(aired_in_season > 0){
-          series_labels_i.push("Season " + s.padStart(2, '0'));
+          series_labels_i.push((raw.length > 1 ? displayTitle + ' · ' : '') + "Season " + s.padStart(2, '0'));
         }
       });
       
@@ -1129,10 +1173,6 @@ angular.module('TVCharts.Charts', [
     });
 
     chartsCtrl.series_labels = series_labels;
-
-    // Connected seasons create one continuous episode line and one distinct
-    // full-series trendline per show, which is the clearest comparison view.
-    if(raw.length > 1){ chartsCtrl.connectSeasons = true; }
 
     if(chartsCtrl.chart_title.length > 1){
       chartsCtrl.colors = getColors(chartsCtrl.chart_title.length, false);
